@@ -1,0 +1,247 @@
+{
+  "errors": {
+    "0xFE": "no valid reply after 4 attempts: unexpected Get VCP reply body: 02 00"
+  },
+  "values": {
+    "0x02": {
+      "current": 2,
+      "max": 2,
+      "type": 1
+    },
+    "0x0B": {
+      "current": 100,
+      "max": 100,
+      "type": 1
+    },
+    "0x0C": {
+      "current": 35,
+      "max": 85,
+      "type": 0
+    },
+    "0x10": {
+      "current": 85,
+      "max": 100,
+      "type": 0
+    },
+    "0x12": {
+      "current": 50,
+      "max": 100,
+      "type": 0
+    },
+    "0x14": {
+      "current": 5,
+      "max": 11,
+      "type": 0
+    },
+    "0x16": {
+      "current": 100,
+      "max": 100,
+      "type": 0
+    },
+    "0x18": {
+      "current": 100,
+      "max": 100,
+      "type": 0
+    },
+    "0x1A": {
+      "current": 100,
+      "max": 100,
+      "type": 0
+    },
+    "0x1E": {
+      "current": 0,
+      "max": 1,
+      "type": 1
+    },
+    "0x52": {
+      "current": 0,
+      "max": 255,
+      "type": 1
+    },
+    "0x54": {
+      "current": 1,
+      "max": 1,
+      "type": 1
+    },
+    "0x60": {
+      "current": 13589,
+      "max": 8206,
+      "type": 0
+    },
+    "0x62": {
+      "current": 50,
+      "max": 100,
+      "type": 0
+    },
+    "0x68": {
+      "current": 0,
+      "max": 5,
+      "type": 0
+    },
+    "0x6C": {
+      "current": 50,
+      "max": 100,
+      "type": 0
+    },
+    "0x6E": {
+      "current": 50,
+      "max": 100,
+      "type": 0
+    },
+    "0x70": {
+      "current": 50,
+      "max": 100,
+      "type": 0
+    },
+    "0x72": {
+      "current": 120,
+      "max": 251,
+      "type": 0
+    },
+    "0x86": {
+      "current": 4,
+      "max": 8,
+      "type": 0
+    },
+    "0x8D": {
+      "current": 2,
+      "max": 2,
+      "type": 0
+    },
+    "0xA4": {
+      "current": 0,
+      "max": 65535,
+      "type": 0
+    },
+    "0xA5": {
+      "current": 0,
+      "max": 65535,
+      "type": 0
+    },
+    "0xA8": {
+      "current": 0,
+      "max": 3,
+      "type": 1
+    },
+    "0xAA": {
+      "current": 1,
+      "max": 5,
+      "type": 1
+    },
+    "0xAC": {
+      "current": 23364,
+      "max": 1,
+      "type": 1
+    },
+    "0xAE": {
+      "current": 6003,
+      "max": 0,
+      "type": 1
+    },
+    "0xB4": {
+      "current": 1,
+      "max": 2,
+      "type": 1
+    },
+    "0xB6": {
+      "current": 3,
+      "max": 8,
+      "type": 0
+    },
+    "0xC0": {
+      "current": 1674,
+      "max": 65535,
+      "type": 1
+    },
+    "0xC6": {
+      "current": 111,
+      "max": 65535,
+      "type": 1
+    },
+    "0xC8": {
+      "current": 5,
+      "max": 65302,
+      "type": 1
+    },
+    "0xC9": {
+      "current": 10,
+      "max": 65535,
+      "type": 1
+    },
+    "0xCA": {
+      "current": 2,
+      "max": 2,
+      "type": 1
+    },
+    "0xCC": {
+      "current": 2,
+      "max": 36,
+      "type": 0
+    },
+    "0xD6": {
+      "current": 1,
+      "max": 4,
+      "type": 1
+    },
+    "0xDA": {
+      "current": 0,
+      "max": 2,
+      "type": 1
+    },
+    "0xDC": {
+      "current": 0,
+      "max": 4,
+      "type": 0
+    },
+    "0xDF": {
+      "current": 768,
+      "max": 255,
+      "type": 1
+    },
+    "0xE0": {
+      "current": 0,
+      "max": 4,
+      "type": 1
+    },
+    "0xE6": {
+      "current": 0,
+      "max": 1,
+      "type": 1
+    },
+    "0xE9": {
+      "current": 0,
+      "max": 2,
+      "type": 1
+    },
+    "0xEB": {
+      "current": 0,
+      "max": 3,
+      "type": 1
+    },
+    "0xEC": {
+      "current": 0,
+      "max": 1027,
+      "type": 1
+    },
+    "0xED": {
+      "current": 1,
+      "max": 1,
+      "type": 1
+    },
+    "0xF0": {
+      "current": 0,
+      "max": 1,
+      "type": 1
+    },
+    "0xF7": {
+      "current": 66,
+      "max": 66,
+      "type": 1
+    },
+    "0xF9": {
+      "current": 0,
+      "max": 4,
+      "type": 1
+    }
+  }
+}

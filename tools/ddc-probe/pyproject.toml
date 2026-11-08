@@ -1,0 +1,22 @@
+[project]
+name = "ddc-probe"
+version = "0.1.0"
+description = "DDC/CI probe for finding and setting monitor controls on Apple Silicon Macs"
+readme = "README.md"
+authors = [
+    { name = "Elisei", email = "elisey.rav@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+ddc-probe = "ddc_probe:main"
+
+[build-system]
+requires = ["uv_build>=0.13.0,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+]
