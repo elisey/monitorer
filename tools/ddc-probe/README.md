@@ -51,6 +51,16 @@ other irreversible actions.
 - Picture Format is VCP `0x86` (MCCS Display Scaling). Observed values:
   Wide screen = `8`, 16:9 = `4`. The capabilities string also declares `01 02 21 22`, which
   presumably map to 4:3, 1:1, Movie 1 and Movie 2; this has not been verified.
+- Input is VCP `0x60` (MCCS Input Select). Writing the MCCS value switches the input:
+  USB-C = `0x15`, HDMI 1 = `0x11`. On reads the monitor adds a vendor value in the high byte
+  (`0x3515` on USB-C, `0x2111` on HDMI 1), so `ddc-probe set 0x60 …` reports "did not become"
+  even though the switch happened; check the low byte of the "last read" value instead. The
+  capabilities string also declares `00 0F 21 2F 35`; `0x0F` is DisplayPort per MCCS, the rest
+  has not been mapped.
+- Volume is VCP `0x62` (MCCS Audio Speaker Volume), continuous `0`...`100`; writes are echoed
+  back exactly. VCP `0x8D` (Audio Mute) reads `2` (unmuted) and has not been written yet.
+- The monitor keeps answering DDC from the Mac while it shows another input, which is what
+  makes switching back from the Mac possible.
 - The monitor answers a request only when it is written twice in a row; otherwise it replies
   with a null message ("not ready").
 - After a Picture Format change the monitor ignores DDC requests for a couple of seconds.

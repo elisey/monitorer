@@ -19,6 +19,9 @@ final class FakeDisplay: I2CTransport {
     var busyReads: Int
     /// Whether the display accepts Set VCP requests without changing anything.
     var ignoresSets: Bool
+    /// What the display stores for a Set VCP request, by code and written value. Lets a
+    /// test model codes that read back differently from what was written.
+    var stores: (UInt8, UInt16) -> UInt16 = { _, value in value }
     private(set) var writes: [[UInt8]] = []
     private var pending: [UInt8] = []
 
@@ -43,7 +46,8 @@ final class FakeDisplay: I2CTransport {
             }
         case 0x03:
             if !ignoresSets {
-                values[payload[2]] = UInt16(payload[3]) << 8 | UInt16(payload[4])
+                let code = payload[2]
+                values[code] = stores(code, UInt16(payload[3]) << 8 | UInt16(payload[4]))
             }
         default:
             break
@@ -61,4 +65,14 @@ final class FakeDisplay: I2CTransport {
 
 func makeClient(_ display: FakeDisplay) -> DDCClient {
     DDCClient(transport: display, sleep: { _ in })
+}
+
+/// A 346B1C-like display: on reads of VCP 0x60 the high byte carries a vendor value, so the
+/// input reads back as 0x3515 (USB-C) or 0x2111 (HDMI 1) rather than the low byte alone.
+func makeDisplayWithInput(_ input: UInt16, format: UInt16 = 8) -> FakeDisplay {
+    let vendorHighByte: [UInt16: UInt16] = [0x15: 0x3500, 0x11: 0x2100]
+    func reading(_ value: UInt16) -> UInt16 { (vendorHighByte[value] ?? 0) | value }
+    let display = FakeDisplay(values: [0x60: reading(input), 0x86: format])
+    display.stores = { code, value in code == 0x60 ? reading(value) : value }
+    return display
 }

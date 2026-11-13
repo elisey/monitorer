@@ -51,3 +51,21 @@ import Testing
         return message.contains("did not become 4")
     }
 }
+
+@Test func setAcceptsReadBackThatPassesCustomCheck() throws {
+    let display = FakeDisplay(values: [0x60: 0x2111])
+    display.stores = { _, value in 0x3500 | value }
+    let result = try makeClient(display).setVCP(0x60, 0x15) { $0 & 0xFF == 0x15 }
+    #expect(result.current == 0x3515)
+}
+
+@Test func setFailsWhenReadBackFailsCustomCheck() {
+    let display = FakeDisplay(values: [0x60: 0x2111])
+    display.stores = { _, value in 0x3500 | value }
+    #expect {
+        try makeClient(display).setVCP(0x60, 0x15) { $0 == 0x15 }
+    } throws: { error in
+        guard case DDCError.timeout(let message) = error else { return false }
+        return message.contains("did not become 21")
+    }
+}

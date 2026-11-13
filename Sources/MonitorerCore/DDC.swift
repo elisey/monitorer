@@ -79,7 +79,7 @@ public struct VCPValue: Equatable, Sendable {
     public let current: UInt16
 }
 
-public enum DDCError: Error, Equatable, CustomStringConvertible {
+public enum DDCError: Error, Equatable, Sendable, CustomStringConvertible {
     /// A corrupted, unexpected or "not ready" reply; worth retrying.
     case badReply(String)
     /// The I2C call itself failed; worth retrying.

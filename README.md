@@ -1,25 +1,33 @@
 # monitorer
 
-**Switch your monitor's Picture Format from the macOS command line.**
+**Switch your monitor's Picture Format, input and volume from the macOS command line.**
 
-`monitorer` toggles the built-in *Picture Format* setting of a **Philips 346B1C** ultrawide
-monitor between **Wide screen (21:9)** and **16:9** over DDC/CI, so you no longer have to dig
-through the on-screen menu. It changes the monitor's own setting, not the macOS resolution.
+`monitorer` drives three settings of a **Philips 346B1C** ultrawide monitor over DDC/CI: the
+built-in *Picture Format* (**Wide screen (21:9)** or **16:9**), the *Input* (**USB-C** or
+**HDMI**) and the speaker *Volume*, so you no longer have to dig through the on-screen menu. One hotkey moves the
+monitor between a Mac on USB-C using the whole panel and a 16:9 device on HDMI (a game
+console, say) shown without stretching. It changes the monitor's own settings, not the macOS
+resolution.
 
 ```console
 $ monitorer toggle
-Picture format: 16:9
+Picture format: 16:9, input: HDMI
 
 $ monitorer toggle
-Picture format: Wide screen
+Picture format: Wide screen, input: USB-C
 ```
 
 - **One self-contained binary.** It talks to the monitor directly through IOKit; no m1ddc,
   ddcctl, Python or GUI app required.
-- **Safe by design.** The monitor is identified by its EDID name, only two known values of one
-  VCP code are ever written, and every write is verified by reading it back.
-- **Fast.** A switch takes well under a second, which makes it a good fit for a hotkey.
+- **Safe by design.** The monitor is identified by its EDID name, only a handful of known
+  values of two VCP codes are ever written, and every write is verified by reading it back.
+- **Works from either side.** The monitor keeps answering DDC on the inactive input, so the
+  Mac can call the monitor back to itself while it is showing the HDMI device.
+- **Fast.** A picture format switch takes about a second, a full scene switch two to three,
+  which makes it a good fit for a hotkey.
 - **Launcher friendly.** Clear output and exit codes for Raycast, Alfred, Shortcuts or scripts.
+- **A volume slider on a hotkey.** `monitorer volume` pops up a small floating slider that
+  drives the monitor's speakers and goes away on Escape or a click anywhere else.
 
 ## Requirements
 
@@ -50,49 +58,101 @@ make uninstall                        # use the same PREFIX as for install
 
 | Command | Effect |
 |---|---|
-| `monitorer wide` | Switch to Wide screen (does nothing if already there) |
-| `monitorer 16:9` | Switch to 16:9 (does nothing if already there) |
-| `monitorer toggle` | Wide screen → 16:9; 16:9 or any other format → Wide screen |
+| `monitorer toggle` | Switch between the two scenes: **USB-C + Wide screen** and **HDMI + 16:9** |
+| `monitorer wide` | Switch the picture format to Wide screen (does nothing if already there) |
+| `monitorer narrow` | Switch the picture format to 16:9 (does nothing if already there) |
+| `monitorer usbc` | Switch the input to USB-C (does nothing if already there) |
+| `monitorer hdmi` | Switch the input to HDMI (does nothing if already there) |
+| `monitorer volume` | Open a floating volume slider; Escape or a click outside closes it |
 | `monitorer --help` | Show usage |
+
+`toggle` looks at the current input: on HDMI it goes to USB-C + Wide screen, on USB-C (or any
+other input) it goes to HDMI + 16:9. The picture format is changed first and the input second,
+so the device being switched to never sees the old format. The single-setting commands never
+touch the other setting.
 
 | Exit code | Meaning |
 |---|---|
-| `0` | Done; the resulting format is printed to stdout |
-| `1` | Monitor not found, no valid reply, or the new value was not applied (details on stderr) |
+| `0` | Done; the resulting format, input or volume is printed to stdout |
+| `1` | Monitor not found, no valid reply, or the new value was not applied (details on stderr). For `toggle` this can mean the format changed but the input did not; run it again or use `usbc` / `hdmi`. |
 | `2` | Unknown command or wrong arguments |
 
-### Hotkey with Raycast
+### Hotkeys with Raycast
 
-Create a [Script Command](https://github.com/raycast/script-commands) and assign it a hotkey in
-Raycast settings:
+Raycast runs plain shell scripts as [Script Commands](https://github.com/raycast/script-commands)
+and lets you bind a hotkey to each one. Both commands below assume the binary is installed with
+`make install`; launchers do not load your shell `PATH`, so the scripts use the absolute path.
+
+1. Pick a folder for your scripts, for example `~/raycast-scripts`, and create it.
+2. Put the script files below into it and make them executable:
+
+   ```sh
+   chmod +x ~/raycast-scripts/*.sh
+   ```
+
+3. In Raycast open **Settings → Extensions → Script Commands → Add Directories** and add
+   that folder. The scripts show up as commands named after their `@raycast.title`.
+4. Select a command in the same list and set its **Hotkey**.
+
+#### Scene toggle
+
+`~/raycast-scripts/monitor-toggle.sh`:
 
 ```bash
 #!/bin/bash
 
 # @raycast.title Monitor Toggle
-# @raycast.description Toggle monitor Picture Format between Wide screen and 16:9
+# @raycast.description Switch the monitor between USB-C + Wide screen and HDMI + 16:9
 # @raycast.mode compact
 # @raycast.schemaVersion 1
 
 ~/.local/bin/monitorer toggle
 ```
 
-`compact` mode shows the result (or the error) as a toast. Launchers do not load your shell
-`PATH`, so always use the absolute path to the binary.
+`compact` mode shows the result (or the error) as a toast once the command finishes.
+
+#### Volume slider
+
+`~/raycast-scripts/monitor-volume.sh`:
+
+```bash
+#!/bin/bash
+
+# @raycast.title Monitor Volume
+# @raycast.description Show a volume slider for the monitor speakers
+# @raycast.mode silent
+# @raycast.schemaVersion 1
+
+~/.local/bin/monitorer volume
+```
+
+Use `silent` mode here: the command keeps running while the slider window is open, and
+`compact` would show a spinner for that whole time. Pressing the hotkey opens the slider in the
+middle of the screen under the mouse; drag it or nudge it with the arrow keys, then press Escape
+or click anywhere else to dismiss it.
+
+Every change is written to the monitor in the background; while a write is in flight only the
+latest slider position is kept, so the monitor follows the slider without replaying intermediate
+values. A DDC error is shown in red under the slider instead of closing the window.
 
 ## How it works
 
-The monitor exposes Picture Format as the standard MCCS control **VCP `0x86` (Display
-Scaling)**:
+The monitor exposes all three settings as standard MCCS controls: Picture Format as **VCP
+`0x86` (Display Scaling)**, the input as **VCP `0x60` (Input Select)** and the volume as **VCP
+`0x62` (Audio Speaker Volume)**:
 
-| OSD setting | VCP `0x86` value |
-|---|---|
-| Wide screen | `0x08` |
-| 16:9 | `0x04` |
+| OSD setting | VCP code | Value |
+|---|---|---|
+| Picture Format: Wide screen | `0x86` | `0x08` |
+| Picture Format: 16:9 | `0x86` | `0x04` |
+| Input: USB-C | `0x60` | `0x15` |
+| Input: HDMI 1 | `0x60` | `0x11` |
+| Volume | `0x62` | `0`...`100`, as reported by the monitor |
 
-These values were not taken from documentation. They were found by reading every VCP code
+The format values were not taken from documentation. They were found by reading every VCP code
 before and after switching the setting by hand in the OSD and comparing the two snapshots;
-`0x86` was the only code that changed. The tool used for that lives in
+`0x86` was the only code that changed. The input values follow MCCS 2.2 and were confirmed by
+switching over DDC and watching the monitor. The tool used for both lives in
 [`tools/ddc-probe`](tools/ddc-probe).
 
 Under the hood `monitorer`:
@@ -101,12 +161,14 @@ Under the hood `monitorer`:
    same mechanism used by [m1ddc](https://github.com/waydabber/m1ddc) and
    [MonitorControl](https://github.com/MonitorControl/MonitorControl)), and refuses to continue
    if it is missing or ambiguous;
-2. reads VCP `0x86` to learn the current format;
+2. reads the VCP code to learn the current value and skips the write if nothing would change;
 3. writes the target value and polls until the monitor reports it back.
 
-The 346B1C has two quirks the client handles: it answers a request only when the request is
-written **twice** in a row, and it **ignores DDC for a moment** after a format change, so
-reads are retried for up to about five seconds.
+The 346B1C has a few quirks the client handles: it answers a request only when the request is
+written **twice** in a row; it **ignores DDC for a moment** after a format change, so reads are
+retried for up to about five seconds; and on reads of `0x60` it fills the **high byte with a
+vendor value** (`0x3515` for USB-C, `0x2111` for HDMI), so only the low byte is compared when
+verifying an input switch.
 
 ## Troubleshooting
 
@@ -115,9 +177,12 @@ reads are retried for up to about five seconds.
   through.
 - **`no valid reply …` / `did not become …`**: the monitor was busy or the cable dropped the
   request. Run the command again; if it keeps failing, try another cable or port.
-- **Another monitor model**: the picture format values are model specific. Use
-  `tools/ddc-probe` to find the right VCP code and values for your monitor before changing the
-  constants in `PictureFormat.swift` and the name in `main.swift`.
+- **The monitor shows "no signal" after `hdmi`**: nothing is connected to HDMI 1 (or the
+  device is asleep). Run `monitorer usbc` from the Mac, or pick the input in the OSD.
+- **Another monitor model**: the picture format values are model specific, and the input
+  values depend on which ports the monitor has. Use `tools/ddc-probe` to find the right VCP
+  codes and values for your monitor before changing the constants in `PictureFormat.swift`
+  and `InputSource.swift` and the name in `main.swift`.
 
 ## Development
 
@@ -132,9 +197,14 @@ Sources/
     DDC.swift           DDC/CI packets and reply parsing
     DDCClient.swift     retries and verified writes over an I2C transport
     PictureFormat.swift Picture Format values and switching logic
+    InputSource.swift   Input values and switching logic
+    Scene.swift         format + input pairs and the toggle between them
+    Volume.swift        speaker volume
     EDID.swift          monitor name from EDID
     IOAVService.swift   IOKit transport and display lookup
   monitorer/          command-line entry point
+    main.swift          argument parsing and the one-shot commands
+    VolumeWindow.swift  AppKit panel behind the volume command
 Tests/                unit tests using an in-memory fake display
 tools/ddc-probe/      Python tool for discovering VCP codes of other settings
 ```
@@ -148,7 +218,14 @@ tools/ddc-probe/      Python tool for discovering VCP codes of other settings
    `FakeDisplay`.
 3. Add the command and its usage line to `Sources/monitorer/main.swift`.
 
+If `swift test` fails with "plugin for module 'TestingMacros' not found", the Command Line
+Tools toolchain is not loading the Swift Testing macros on its own; point it at them:
+
+```sh
+swift test -Xswiftc -plugin-path -Xswiftc /Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing
+```
+
 ## Disclaimer
 
 `monitorer` relies on private macOS APIs, which may change between macOS releases. It writes
-only values that were observed on a Philips 346B1C; use it with other monitors at your own risk.
+only values that were verified on a Philips 346B1C; use it with other monitors at your own risk.

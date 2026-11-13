@@ -6,12 +6,15 @@ let monitorName = "PHL 346B1C"
 let usage = """
     usage: monitorer <command>
 
-    Switches the Picture Format of the \(monitorName) monitor over DDC/CI.
+    Controls the \(monitorName) monitor over DDC/CI: picture format, input and volume.
 
     commands:
-      wide      switch to Wide screen
-      16:9      switch to 16:9
-      toggle    switch Wide screen to 16:9, anything else to Wide screen
+      toggle    switch between the USB-C + Wide screen and HDMI + 16:9 scenes
+      wide      switch the picture format to Wide screen
+      narrow    switch the picture format to 16:9
+      usbc      switch the input to USB-C
+      hdmi      switch the input to HDMI
+      volume    open a volume slider; Escape or a click outside closes it
     """
 
 func fail(_ message: String, code: Int32 = 1) -> Never {
@@ -27,25 +30,40 @@ if command == "-h" || command == "--help" {
     exit(0)
 }
 
-let requested: PictureFormat?
+enum Command {
+    case toggle
+    case format(PictureFormat)
+    case input(InputSource)
+    case volume
+}
+
+let parsed: Command
 switch command {
-case "wide": requested = .wideScreen
-case "16:9": requested = .sixteenByNine
-case "toggle": requested = nil
+case "toggle": parsed = .toggle
+case "wide": parsed = .format(.wideScreen)
+case "narrow": parsed = .format(.sixteenByNine)
+case "usbc": parsed = .input(.usbC)
+case "hdmi": parsed = .input(.hdmi1)
+case "volume": parsed = .volume
 default: fail("unknown command: \(command)\n\n\(usage)", code: 2)
 }
 
 do {
-    let controller = PictureFormatController(
-        client: DDCClient(transport: try ExternalDisplays.find(named: monitorName)))
-    let format: PictureFormat
-    if let requested {
-        try controller.set(requested)
-        format = requested
-    } else {
-        format = try controller.toggle()
+    let client = DDCClient(transport: try ExternalDisplays.find(named: monitorName))
+    switch parsed {
+    case .toggle:
+        let scene = try SceneController(client: client).toggle()
+        print("Picture format: \(scene.format.displayName), input: \(scene.input.displayName)")
+    case .format(let format):
+        try PictureFormatController(client: client).set(format)
+        print("Picture format: \(format.displayName)")
+    case .input(let input):
+        try InputSourceController(client: client).set(input)
+        print("Input: \(input.displayName)")
+    case .volume:
+        let controller = VolumeController(client: client)
+        VolumeApp.run(controller: controller, initial: try controller.current())
     }
-    print("Picture format: \(format.displayName)")
 } catch {
     fail("error: \(error)")
 }

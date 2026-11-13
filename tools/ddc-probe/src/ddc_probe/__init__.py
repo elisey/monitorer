@@ -11,6 +11,8 @@ from .snapshot import diff_snapshots, load_snapshot, save_snapshot, take_snapsho
 # string. 0x86 (Display Scaling) is the OSD Picture Format setting.
 WRITABLE_VALUES = {
     0x86: {0x01, 0x02, 0x04, 0x08, 0x21, 0x22},
+    0x60: {0x11, 0x15},
+    0x62: set(range(0, 101)),
 }
 
 

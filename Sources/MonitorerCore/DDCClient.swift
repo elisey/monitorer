@@ -54,15 +54,21 @@ public final class DDCClient {
     }
 
     /// Writes a VCP value and polls until the display reports it back.
+    ///
+    /// By default the display has to report exactly the written value. Some codes read
+    /// back differently from what was written (the display fills in extra bits); callers
+    /// for those pass `isApplied` to decide whether a read-back value counts as success.
     @discardableResult
-    public func setVCP(_ code: UInt8, _ value: UInt16) throws(DDCError) -> VCPValue {
+    public func setVCP(
+        _ code: UInt8, _ value: UInt16, isApplied: ((UInt16) -> Bool)? = nil
+    ) throws(DDCError) -> VCPValue {
         try send(DDC.setVCPRequest(code: code, value: value))
         var lastSeen = "nothing"
         for _ in 0..<timing.verifyAttempts {
             sleep(timing.verifyInterval)
             do {
                 let current = try readOnce(code)
-                if current.current == value { return current }
+                if isApplied?(current.current) ?? (current.current == value) { return current }
                 lastSeen = "value \(current.current)"
             } catch where error.isRetryable {
                 lastSeen = error.description
